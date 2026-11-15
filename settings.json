@@ -1,0 +1,5 @@
+{
+  "port": 7860,
+  "context": 4096,
+  "device": "cuda"
+}

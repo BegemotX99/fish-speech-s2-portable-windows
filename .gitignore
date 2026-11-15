@@ -1,0 +1,13 @@
+/app/
+/runtime/
+/cache/
+/temp/
+/logs/
+/output/
+/voices/
+/checkpoints/
+__pycache__/
+*.pyc
+*.part
+*.zip
+!portable/model-manifest.json

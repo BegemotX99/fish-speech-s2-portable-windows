@@ -1,0 +1,23 @@
+Built with Fish Audio
+
+This model is licensed under the Fish Audio Research License, Copyright © 39 AI, INC. All Rights Reserved.
+
+This unofficial package downloads Fish Speech and the S2-Pro model from
+their original publishers. It does not include their binaries or weights
+in its installer ZIP and is not endorsed by Fish Audio.
+
+The portable wrapper changes runtime behavior by limiting the text model's
+context to 4096 by default, disabling torch.compile, and splitting long
+single-speaker input into independent short requests. It does not modify
+the downloaded source files or checkpoint files.
+
+The wrapper also constructs text-model parameters on the meta device
+before the upstream assign=True checkpoint load, avoiding a redundant
+random FP32 copy in RAM. Nonpersistent buffers are materialized on CPU.
+
+Fish Speech source revision: 0f8a12e8a651062fdee9c33a894bdccd3a8513f1
+S2-Pro model revision: 1de9996b6be38b745688de084d87a5633f714e4e
+
+Third-party components retain their own licenses. Their original license
+files remain in their downloaded directories. The MIT license in LICENSE
+applies only to the original wrapper code and documentation.

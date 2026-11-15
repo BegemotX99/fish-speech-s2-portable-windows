@@ -1,0 +1,27 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S2-Pro — локальная озвучка</title>
+<style>
+:root{color-scheme:dark;font:16px/1.55 system-ui,sans-serif;background:#10151c;color:#e4eaf0}body{max-width:850px;margin:40px auto;padding:0 22px}h1{font-size:30px;margin-bottom:0}p{color:#aebdcc}.card{background:#19222e;border:1px solid #344457;border-radius:14px;padding:22px;margin:18px 0}label{display:block;margin:12px 0 6px}textarea,input,button{font:inherit;box-sizing:border-box;border:1px solid #4a6076;border-radius:7px;padding:10px;background:#111a24;color:inherit}textarea{width:100%;resize:vertical}button{background:#5cdda9;color:#0b2820;font-weight:700;cursor:pointer;margin:16px 8px 0 0}button:disabled{opacity:.45;cursor:wait}input[type=number]{width:130px}a{color:#81dfba}audio{width:100%;margin-top:15px}#status{white-space:pre-wrap;overflow-wrap:anywhere}small{color:#acbac9}progress{width:100%}
+</style>
+<h1>Озвучка текста · S2-Pro</h1><p>Локальный запуск на вашем компьютере · Built with Fish Audio</p>
+<div class="card"><div id="status" role="status" aria-live="polite">Подключение к серверу...</div><progress id="progress" value="0" max="100" hidden></progress></div>
+<div class="card"><label for="text">Текст для озвучки</label><textarea id="text" rows="6" maxlength="10000" placeholder="Привет! Это проверка синтеза речи на моём компьютере."></textarea>
+<small>Один диктор. Для стабильного голоса добавьте образец ниже. Длинный текст делится на короткие фрагменты.</small>
+<label for="audio">Образец голоса (необязательно)</label><input id="audio" type="file" accept="audio/*"><p><small>Чистая запись 5–15 секунд, без музыки, до 20 МБ. Используются первые 20 секунд; расшифровка должна соответствовать именно им.</small></p>
+<label for="ref">Точная расшифровка образца</label><textarea id="ref" rows="2" maxlength="1500"></textarea>
+<label for="temperature">Температура (0.1–1.0)</label><input id="temperature" type="number" value="0.7" min="0.1" max="1" step="0.05">
+<label for="seed">Seed (необязательно)</label><input id="seed" type="number" min="0" max="4294967295" placeholder="случайный"><br>
+<button id="generate" disabled>Создать аудио</button><button id="openOutput" type="button" hidden>Показать результат</button>
+<div id="result" hidden><audio id="player" controls></audio><a id="download" download>Скачать WAV</a><p><small>Аудио и исходный текст также сохранены в папке output рядом с батниками.</small></p></div></div>
+<p><small>Закройте консоль или нажмите в ней Ctrl+C, чтобы остановить сервер. При нехватке видеопамяти закройте другие GPU-программы. Модель S2-Pro распространяется по Fish Audio Research License; коммерческое использование требует отдельной лицензии. Неофициальная portable-обёртка.</small></p>
+<script>
+const token='__TOKEN__', el=id=>document.getElementById(id);let busy=false,ready=false;
+async function health(){try{const r=await fetch('/health');const s=await r.json();ready=s.state==='ready';if(!busy)el('status').textContent=s.message;el('generate').disabled=busy||!ready;}catch(e){ready=false;el('status').textContent='Сервер недоступен. Проверьте консоль и logs.';el('generate').disabled=true;}}
+function toBase64(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=reject;reader.readAsDataURL(file);});}
+el('generate').onclick=async()=>{if(busy)return;busy=true;el('generate').disabled=true;el('result').hidden=true;el('progress').hidden=false;el('progress').value=0;
+try{let audio='';const file=el('audio').files[0];if(file){if(file.size>20*1024*1024)throw Error('Выберите образец меньше 20 МБ.');audio=await toBase64(file);}
+const r=await fetch('/generate',{method:'POST',headers:{'Content-Type':'application/json','X-Fish-Token':token},body:JSON.stringify({text:el('text').value,audio,reference_text:el('ref').value,temperature:Number(el('temperature').value),seed:el('seed').value})});const j=await r.json();if(!r.ok)throw Error(j.error||r.statusText);
+for(;;){await new Promise(resolve=>setTimeout(resolve,1200));const response=await fetch('/jobs/'+j.id);const s=await response.json();el('status').textContent=s.message;el('progress').value=s.progress||0;if(s.state==='error')throw Error(s.message);if(s.state==='done'){el('player').src=s.url;el('download').href=s.url;el('result').hidden=false;break;}}
+}catch(e){el('status').textContent='Ошибка: '+e.message;}finally{busy=false;el('generate').disabled=!ready;el('progress').hidden=true;}};
+health();setInterval(health,5000);
+</script></html>
